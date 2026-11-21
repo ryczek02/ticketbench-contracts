@@ -16,7 +16,7 @@ func TestTraceIDAndQuiet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer shutdown(context.Background())
+	defer func() { _ = shutdown(context.Background()) }()
 
 	ctx, span := Tracer("test").Start(context.Background(), "root")
 	defer span.End()
