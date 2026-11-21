@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+package ticketbench.v1;
+
+import "ticketbench/v1/store.proto";
+
+option go_package = "github.com/ryczek02/ticketbench-contracts/gen/ticketbench/v1;tbv1";
+
+// RunnerService executes a benchmark plan against the stores and streams
+// result rows back to the caller (the tbench CLI).
+service RunnerService {
+  rpc Ping(PingRequest) returns (PingResponse);
+  rpc Run(RunRequest) returns (stream RunEvent);
+}
+
+message PingRequest {}
+
+message StoreStatus {
+  string name = 1;
+  string address = 2;
+  bool healthy = 3;
+  string engine = 4;
+  string server_version = 5;
+  string build_version = 6;
+  repeated string strategies = 7;
+  string error = 8;
+}
+
+message PingResponse {
+  string runner_version = 1;
+  repeated StoreStatus stores = 2;
+}
+
+message ResetStep {}
+
+message LoadStep {
+  int32 batch_size = 1;
+  int32 workers = 2;
+}
+
+message IndexStep {
+  bool enabled = 1;
+}
+
+message ScenarioStep {
+  repeated string scenarios = 1;
+  int32 repetitions = 2;
+  int32 warmup = 3;
+  // Iterations are numbered from iteration_base so that two passes over the
+  // same loaded data (indexes off, then on) never touch the same rows.
+  int64 iteration_base = 4;
+  int64 timeout_ms = 5;
+}
+
+message ExplainStep {
+  repeated string scenarios = 1;
+  int64 iteration = 2;
+}
+
+message ContendStep {
+  repeated int32 clients = 1;
+  int32 hot_tickets = 2;
+  int32 rounds = 3;
+  repeated string strategies = 4;
+  double trace_ratio = 5;
+}
+
+message StatsStep {}
+
+message Step {
+  string id = 1;
+  string store = 2;
+  DatasetSpec dataset = 3;
+  oneof kind {
+    ResetStep reset = 10;
+    LoadStep load = 11;
+    IndexStep indexes = 12;
+    ScenarioStep scenarios = 13;
+    ExplainStep explain = 14;
+    ContendStep contend = 15;
+    StatsStep stats = 16;
+  }
+}
+
+message RunRequest {
+  string run_id = 1;
+  repeated Step steps = 2;
+  map<string, string> labels = 3;
+  // Stop at the first failing step instead of reporting and moving on.
+  bool fail_fast = 4;
+}
+
+// Common fields attached to every result row.
+message ResultMeta {
+  string run_id = 1;
+  string step_id = 2;
+  string store = 3;
+  int64 tickets = 4;
+  bool indexes = 5;
+  string trace_id = 6;
+  map<string, string> labels = 7;
+}
+
+message Progress {
+  string step_id = 1;
+  string store = 2;
+  string message = 3;
+  int32 step_index = 4;
+  int32 step_count = 5;
+}
+
+message ScenarioResult {
+  ResultMeta meta = 1;
+  string scenario = 2;
+  int32 repetition = 3;
+  bool warmup = 4;
+  int64 server_ns = 5;
+  int64 prepare_ns = 6;
+  int64 e2e_ns = 7;
+  int64 rows = 8;
+  bool timed_out = 9;
+  string error = 10;
+}
+
+message LoadResult {
+  ResultMeta meta = 1;
+  string kind = 2; // reset | load | indexes_on | indexes_off
+  int64 server_ns = 3;
+  map<string, int64> rows = 4;
+  string checksum = 5;
+}
+
+message ContendResult {
+  ResultMeta meta = 1;
+  int32 clients = 2;
+  int32 hot_tickets = 3;
+  string strategy = 4;
+  ContendRound round = 5;
+}
+
+message StatsResult {
+  ResultMeta meta = 1;
+  int64 data_bytes = 2;
+  int64 index_bytes = 3;
+  int64 total_bytes = 4;
+  map<string, int64> rows = 5;
+}
+
+message PlanResult {
+  ResultMeta meta = 1;
+  string scenario = 2;
+  string format = 3;
+  string plan = 4;
+  string statement = 5;
+}
+
+message StepError {
+  ResultMeta meta = 1;
+  string message = 2;
+}
+
+message RunEvent {
+  oneof event {
+    Progress progress = 1;
+    ScenarioResult scenario = 2;
+    LoadResult load = 3;
+    ContendResult contend = 4;
+    StatsResult stats = 5;
+    PlanResult plan = 6;
+    StepError error = 7;
+  }
+}

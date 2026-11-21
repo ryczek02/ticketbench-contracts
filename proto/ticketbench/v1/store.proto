@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package ticketbench.v1;
+
+option go_package = "github.com/ryczek02/ticketbench-contracts/gen/ticketbench/v1;tbv1";
+
+// StoreService is implemented by every database adapter (store-postgres,
+// store-mariadb, store-mongo, store-valkey). All durations are measured on the
+// server side, around the database work only, so the gRPC hop does not leak
+// into the benchmark numbers.
+service StoreService {
+  rpc Info(InfoRequest) returns (InfoResponse);
+  // Reset drops all benchmark data and recreates an empty schema.
+  rpc Reset(ResetRequest) returns (ResetResponse);
+  // Load generates the dataset locally (deterministic, from the seed) and
+  // bulk-loads it. Every store produces the same rows for the same spec.
+  rpc Load(LoadRequest) returns (LoadResponse);
+  // SetIndexes creates or drops the secondary indexes.
+  rpc SetIndexes(SetIndexesRequest) returns (SetIndexesResponse);
+  // Execute prepares fixtures (untimed) and runs one scenario iteration (timed).
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+  // Explain returns the query plan of the main statement of a scenario.
+  rpc Explain(ExplainRequest) returns (ExplainResponse);
+  // Contend runs the seat contention test inside the store process.
+  rpc Contend(ContendRequest) returns (ContendResponse);
+  // Stats reports row counts and on-disk / in-memory size.
+  rpc Stats(StatsRequest) returns (StatsResponse);
+}
+
+message DatasetSpec {
+  int64 tickets = 1;
+  uint64 seed = 2;
+}
+
+message InfoRequest {}
+
+message InfoResponse {
+  string engine = 1;
+  string server_version = 2;
+  string build_version = 3;
+  repeated string strategies = 4;
+}
+
+message ResetRequest {}
+
+message ResetResponse {
+  int64 server_ns = 1;
+}
+
+message LoadRequest {
+  DatasetSpec dataset = 1;
+  int32 batch_size = 2;
+  int32 workers = 3;
+}
+
+message LoadResponse {
+  int64 server_ns = 1;
+  map<string, int64> rows = 2;
+  string checksum = 3;
+}
+
+message SetIndexesRequest {
+  bool enabled = 1;
+}
+
+message SetIndexesResponse {
+  int64 server_ns = 1;
+}
+
+message ExecuteRequest {
+  string scenario = 1;
+  int64 iteration = 2;
+  DatasetSpec dataset = 3;
+  int64 timeout_ms = 4;
+}
+
+message ExecuteResponse {
+  int64 server_ns = 1;
+  int64 prepare_ns = 2;
+  int64 rows = 3;
+  bool timed_out = 4;
+}
+
+message ExplainRequest {
+  string scenario = 1;
+  int64 iteration = 2;
+  DatasetSpec dataset = 3;
+}
+
+message ExplainResponse {
+  // text, json or none (engines without a planner, such as Valkey)
+  string format = 1;
+  string plan = 2;
+  string statement = 3;
+}
+
+message ContendRequest {
+  DatasetSpec dataset = 1;
+  int32 clients = 2;
+  int32 hot_tickets = 3;
+  int32 rounds = 4;
+  string strategy = 5;
+  // Fraction of booking attempts that get their own span (0..1).
+  double trace_ratio = 6;
+}
+
+message ContendRound {
+  int32 round = 1;
+  int64 duration_ns = 2;
+  int64 attempts = 3;
+  int64 successes = 4;
+  int64 conflicts = 5;
+  int64 errors = 6;
+  // true when the database shows exactly hot_tickets sold tickets and
+  // exactly hot_tickets reservations created in this round
+  bool consistent = 7;
+  int64 p50_ns = 8;
+  int64 p95_ns = 9;
+  int64 p99_ns = 10;
+  int64 max_ns = 11;
+  int64 mean_ns = 12;
+}
+
+message ContendResponse {
+  repeated ContendRound rounds = 1;
+}
+
+message StatsRequest {}
+
+message StatsResponse {
+  int64 data_bytes = 1;
+  int64 index_bytes = 2;
+  int64 total_bytes = 3;
+  map<string, int64> rows = 4;
+}

@@ -1,0 +1,12 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  except:
+    # RunEvent is a stream of different event kinds, the generic name fits better.
+    - RPC_RESPONSE_STANDARD_NAME
+breaking:
+  use:
+    - FILE
