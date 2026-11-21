@@ -1,5 +1,7 @@
 # ticketbench-contracts
 
+[![CI](https://github.com/ryczek02/ticketbench-contracts/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ryczek02/ticketbench-contracts/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/ryczek02/ticketbench-contracts.svg)](https://pkg.go.dev/github.com/ryczek02/ticketbench-contracts) [![Release](https://img.shields.io/github/v/tag/ryczek02/ticketbench-contracts?sort=semver&label=tag)](https://github.com/ryczek02/ticketbench-contracts/tags) [![Go](https://img.shields.io/github/go-mod/go-version/ryczek02/ticketbench-contracts)](go.mod) [![License: MIT](https://img.shields.io/github/license/ryczek02/ticketbench-contracts)](LICENSE)
+
 Shared Go module for the ticketbench project: gRPC contracts, the domain model,
 the deterministic data generator, scenario definitions and the OpenTelemetry
 setup used by every service.
