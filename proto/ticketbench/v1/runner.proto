@@ -24,6 +24,7 @@ message StoreStatus {
   string build_version = 6;
   repeated string strategies = 7;
   string error = 8;
+  repeated string profiles = 9;
 }
 
 message PingResponse {
@@ -50,6 +51,8 @@ message ScenarioStep {
   // same loaded data (indexes off, then on) never touch the same rows.
   int64 iteration_base = 4;
   int64 timeout_ms = 5;
+  // Connection profile used for every Execute of this step.
+  string profile = 6;
 }
 
 message ExplainStep {
@@ -63,6 +66,7 @@ message ContendStep {
   int32 rounds = 3;
   repeated string strategies = 4;
   double trace_ratio = 5;
+  string profile = 6;
 }
 
 message StatsStep {}
@@ -99,6 +103,8 @@ message ResultMeta {
   bool indexes = 5;
   string trace_id = 6;
   map<string, string> labels = 7;
+  // Connection profile of the step ("" = default).
+  string profile = 8;
 }
 
 message Progress {

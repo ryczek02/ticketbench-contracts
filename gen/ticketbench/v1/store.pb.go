@@ -115,6 +115,8 @@ type InfoResponse struct {
 	ServerVersion string                 `protobuf:"bytes,2,opt,name=server_version,json=serverVersion,proto3" json:"server_version,omitempty"`
 	BuildVersion  string                 `protobuf:"bytes,3,opt,name=build_version,json=buildVersion,proto3" json:"build_version,omitempty"`
 	Strategies    []string               `protobuf:"bytes,4,rep,name=strategies,proto3" json:"strategies,omitempty"`
+	// Connection profiles configured for this store besides the default.
+	Profiles      []string `protobuf:"bytes,5,rep,name=profiles,proto3" json:"profiles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -173,6 +175,13 @@ func (x *InfoResponse) GetBuildVersion() string {
 func (x *InfoResponse) GetStrategies() []string {
 	if x != nil {
 		return x.Strategies
+	}
+	return nil
+}
+
+func (x *InfoResponse) GetProfiles() []string {
+	if x != nil {
+		return x.Profiles
 	}
 	return nil
 }
@@ -466,11 +475,14 @@ func (x *SetIndexesResponse) GetServerNs() int64 {
 }
 
 type ExecuteRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Scenario      string                 `protobuf:"bytes,1,opt,name=scenario,proto3" json:"scenario,omitempty"`
-	Iteration     int64                  `protobuf:"varint,2,opt,name=iteration,proto3" json:"iteration,omitempty"`
-	Dataset       *DatasetSpec           `protobuf:"bytes,3,opt,name=dataset,proto3" json:"dataset,omitempty"`
-	TimeoutMs     int64                  `protobuf:"varint,4,opt,name=timeout_ms,json=timeoutMs,proto3" json:"timeout_ms,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Scenario  string                 `protobuf:"bytes,1,opt,name=scenario,proto3" json:"scenario,omitempty"`
+	Iteration int64                  `protobuf:"varint,2,opt,name=iteration,proto3" json:"iteration,omitempty"`
+	Dataset   *DatasetSpec           `protobuf:"bytes,3,opt,name=dataset,proto3" json:"dataset,omitempty"`
+	TimeoutMs int64                  `protobuf:"varint,4,opt,name=timeout_ms,json=timeoutMs,proto3" json:"timeout_ms,omitempty"`
+	// Connection profile of the store: "" (default, admin user, no TLS),
+	// "role" (least-privilege application user), "tls", "tls_role".
+	Profile       string `protobuf:"bytes,5,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -531,6 +543,13 @@ func (x *ExecuteRequest) GetTimeoutMs() int64 {
 		return x.TimeoutMs
 	}
 	return 0
+}
+
+func (x *ExecuteRequest) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
 }
 
 type ExecuteResponse struct {
@@ -730,7 +749,9 @@ type ContendRequest struct {
 	Rounds     int32                  `protobuf:"varint,4,opt,name=rounds,proto3" json:"rounds,omitempty"`
 	Strategy   string                 `protobuf:"bytes,5,opt,name=strategy,proto3" json:"strategy,omitempty"`
 	// Fraction of booking attempts that get their own span (0..1).
-	TraceRatio    float64 `protobuf:"fixed64,6,opt,name=trace_ratio,json=traceRatio,proto3" json:"trace_ratio,omitempty"`
+	TraceRatio float64 `protobuf:"fixed64,6,opt,name=trace_ratio,json=traceRatio,proto3" json:"trace_ratio,omitempty"`
+	// Connection profile, see ExecuteRequest.profile.
+	Profile       string `protobuf:"bytes,7,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -805,6 +826,13 @@ func (x *ContendRequest) GetTraceRatio() float64 {
 		return x.TraceRatio
 	}
 	return 0
+}
+
+func (x *ContendRequest) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
 }
 
 type ContendRound struct {
@@ -1097,14 +1125,15 @@ const file_ticketbench_v1_store_proto_rawDesc = "" +
 	"\vDatasetSpec\x12\x18\n" +
 	"\atickets\x18\x01 \x01(\x03R\atickets\x12\x12\n" +
 	"\x04seed\x18\x02 \x01(\x04R\x04seed\"\r\n" +
-	"\vInfoRequest\"\x92\x01\n" +
+	"\vInfoRequest\"\xae\x01\n" +
 	"\fInfoResponse\x12\x16\n" +
 	"\x06engine\x18\x01 \x01(\tR\x06engine\x12%\n" +
 	"\x0eserver_version\x18\x02 \x01(\tR\rserverVersion\x12#\n" +
 	"\rbuild_version\x18\x03 \x01(\tR\fbuildVersion\x12\x1e\n" +
 	"\n" +
 	"strategies\x18\x04 \x03(\tR\n" +
-	"strategies\"\x0e\n" +
+	"strategies\x12\x1a\n" +
+	"\bprofiles\x18\x05 \x03(\tR\bprofiles\"\x0e\n" +
 	"\fResetRequest\",\n" +
 	"\rResetResponse\x12\x1b\n" +
 	"\tserver_ns\x18\x01 \x01(\x03R\bserverNs\"}\n" +
@@ -1123,13 +1152,14 @@ const file_ticketbench_v1_store_proto_rawDesc = "" +
 	"\x11SetIndexesRequest\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\"1\n" +
 	"\x12SetIndexesResponse\x12\x1b\n" +
-	"\tserver_ns\x18\x01 \x01(\x03R\bserverNs\"\xa0\x01\n" +
+	"\tserver_ns\x18\x01 \x01(\x03R\bserverNs\"\xba\x01\n" +
 	"\x0eExecuteRequest\x12\x1a\n" +
 	"\bscenario\x18\x01 \x01(\tR\bscenario\x12\x1c\n" +
 	"\titeration\x18\x02 \x01(\x03R\titeration\x125\n" +
 	"\adataset\x18\x03 \x01(\v2\x1b.ticketbench.v1.DatasetSpecR\adataset\x12\x1d\n" +
 	"\n" +
-	"timeout_ms\x18\x04 \x01(\x03R\ttimeoutMs\"~\n" +
+	"timeout_ms\x18\x04 \x01(\x03R\ttimeoutMs\x12\x18\n" +
+	"\aprofile\x18\x05 \x01(\tR\aprofile\"~\n" +
 	"\x0fExecuteResponse\x12\x1b\n" +
 	"\tserver_ns\x18\x01 \x01(\x03R\bserverNs\x12\x1d\n" +
 	"\n" +
@@ -1143,7 +1173,7 @@ const file_ticketbench_v1_store_proto_rawDesc = "" +
 	"\x0fExplainResponse\x12\x16\n" +
 	"\x06format\x18\x01 \x01(\tR\x06format\x12\x12\n" +
 	"\x04plan\x18\x02 \x01(\tR\x04plan\x12\x1c\n" +
-	"\tstatement\x18\x03 \x01(\tR\tstatement\"\xd7\x01\n" +
+	"\tstatement\x18\x03 \x01(\tR\tstatement\"\xf1\x01\n" +
 	"\x0eContendRequest\x125\n" +
 	"\adataset\x18\x01 \x01(\v2\x1b.ticketbench.v1.DatasetSpecR\adataset\x12\x18\n" +
 	"\aclients\x18\x02 \x01(\x05R\aclients\x12\x1f\n" +
@@ -1152,7 +1182,8 @@ const file_ticketbench_v1_store_proto_rawDesc = "" +
 	"\x06rounds\x18\x04 \x01(\x05R\x06rounds\x12\x1a\n" +
 	"\bstrategy\x18\x05 \x01(\tR\bstrategy\x12\x1f\n" +
 	"\vtrace_ratio\x18\x06 \x01(\x01R\n" +
-	"traceRatio\"\xca\x02\n" +
+	"traceRatio\x12\x18\n" +
+	"\aprofile\x18\a \x01(\tR\aprofile\"\xca\x02\n" +
 	"\fContendRound\x12\x14\n" +
 	"\x05round\x18\x01 \x01(\x05R\x05round\x12\x1f\n" +
 	"\vduration_ns\x18\x02 \x01(\x03R\n" +

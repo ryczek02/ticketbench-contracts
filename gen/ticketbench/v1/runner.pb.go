@@ -67,6 +67,7 @@ type StoreStatus struct {
 	BuildVersion  string                 `protobuf:"bytes,6,opt,name=build_version,json=buildVersion,proto3" json:"build_version,omitempty"`
 	Strategies    []string               `protobuf:"bytes,7,rep,name=strategies,proto3" json:"strategies,omitempty"`
 	Error         string                 `protobuf:"bytes,8,opt,name=error,proto3" json:"error,omitempty"`
+	Profiles      []string               `protobuf:"bytes,9,rep,name=profiles,proto3" json:"profiles,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -155,6 +156,13 @@ func (x *StoreStatus) GetError() string {
 		return x.Error
 	}
 	return ""
+}
+
+func (x *StoreStatus) GetProfiles() []string {
+	if x != nil {
+		return x.Profiles
+	}
+	return nil
 }
 
 type PingResponse struct {
@@ -350,6 +358,8 @@ type ScenarioStep struct {
 	// same loaded data (indexes off, then on) never touch the same rows.
 	IterationBase int64 `protobuf:"varint,4,opt,name=iteration_base,json=iterationBase,proto3" json:"iteration_base,omitempty"`
 	TimeoutMs     int64 `protobuf:"varint,5,opt,name=timeout_ms,json=timeoutMs,proto3" json:"timeout_ms,omitempty"`
+	// Connection profile used for every Execute of this step.
+	Profile       string `protobuf:"bytes,6,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -419,6 +429,13 @@ func (x *ScenarioStep) GetTimeoutMs() int64 {
 	return 0
 }
 
+func (x *ScenarioStep) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
+}
+
 type ExplainStep struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Scenarios     []string               `protobuf:"bytes,1,rep,name=scenarios,proto3" json:"scenarios,omitempty"`
@@ -478,6 +495,7 @@ type ContendStep struct {
 	Rounds        int32                  `protobuf:"varint,3,opt,name=rounds,proto3" json:"rounds,omitempty"`
 	Strategies    []string               `protobuf:"bytes,4,rep,name=strategies,proto3" json:"strategies,omitempty"`
 	TraceRatio    float64                `protobuf:"fixed64,5,opt,name=trace_ratio,json=traceRatio,proto3" json:"trace_ratio,omitempty"`
+	Profile       string                 `protobuf:"bytes,6,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -545,6 +563,13 @@ func (x *ContendStep) GetTraceRatio() float64 {
 		return x.TraceRatio
 	}
 	return 0
+}
+
+func (x *ContendStep) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
 }
 
 type StatsStep struct {
@@ -840,14 +865,16 @@ func (x *RunRequest) GetFailFast() bool {
 
 // Common fields attached to every result row.
 type ResultMeta struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	StepId        string                 `protobuf:"bytes,2,opt,name=step_id,json=stepId,proto3" json:"step_id,omitempty"`
-	Store         string                 `protobuf:"bytes,3,opt,name=store,proto3" json:"store,omitempty"`
-	Tickets       int64                  `protobuf:"varint,4,opt,name=tickets,proto3" json:"tickets,omitempty"`
-	Indexes       bool                   `protobuf:"varint,5,opt,name=indexes,proto3" json:"indexes,omitempty"`
-	TraceId       string                 `protobuf:"bytes,6,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
-	Labels        map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	RunId   string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	StepId  string                 `protobuf:"bytes,2,opt,name=step_id,json=stepId,proto3" json:"step_id,omitempty"`
+	Store   string                 `protobuf:"bytes,3,opt,name=store,proto3" json:"store,omitempty"`
+	Tickets int64                  `protobuf:"varint,4,opt,name=tickets,proto3" json:"tickets,omitempty"`
+	Indexes bool                   `protobuf:"varint,5,opt,name=indexes,proto3" json:"indexes,omitempty"`
+	TraceId string                 `protobuf:"bytes,6,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	Labels  map[string]string      `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Connection profile of the step ("" = default).
+	Profile       string `protobuf:"bytes,8,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -929,6 +956,13 @@ func (x *ResultMeta) GetLabels() map[string]string {
 		return x.Labels
 	}
 	return nil
+}
+
+func (x *ResultMeta) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
 }
 
 type Progress struct {
@@ -1646,7 +1680,7 @@ var File_ticketbench_v1_runner_proto protoreflect.FileDescriptor
 const file_ticketbench_v1_runner_proto_rawDesc = "" +
 	"\n" +
 	"\x1bticketbench/v1/runner.proto\x12\x0eticketbench.v1\x1a\x1aticketbench/v1/store.proto\"\r\n" +
-	"\vPingRequest\"\xef\x01\n" +
+	"\vPingRequest\"\x8b\x02\n" +
 	"\vStoreStatus\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x18\n" +
@@ -1657,7 +1691,8 @@ const file_ticketbench_v1_runner_proto_rawDesc = "" +
 	"\n" +
 	"strategies\x18\a \x03(\tR\n" +
 	"strategies\x12\x14\n" +
-	"\x05error\x18\b \x01(\tR\x05error\"j\n" +
+	"\x05error\x18\b \x01(\tR\x05error\x12\x1a\n" +
+	"\bprofiles\x18\t \x03(\tR\bprofiles\"j\n" +
 	"\fPingResponse\x12%\n" +
 	"\x0erunner_version\x18\x01 \x01(\tR\rrunnerVersion\x123\n" +
 	"\x06stores\x18\x02 \x03(\v2\x1b.ticketbench.v1.StoreStatusR\x06stores\"\v\n" +
@@ -1667,17 +1702,18 @@ const file_ticketbench_v1_runner_proto_rawDesc = "" +
 	"batch_size\x18\x01 \x01(\x05R\tbatchSize\x12\x18\n" +
 	"\aworkers\x18\x02 \x01(\x05R\aworkers\"%\n" +
 	"\tIndexStep\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\"\xac\x01\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\"\xc6\x01\n" +
 	"\fScenarioStep\x12\x1c\n" +
 	"\tscenarios\x18\x01 \x03(\tR\tscenarios\x12 \n" +
 	"\vrepetitions\x18\x02 \x01(\x05R\vrepetitions\x12\x16\n" +
 	"\x06warmup\x18\x03 \x01(\x05R\x06warmup\x12%\n" +
 	"\x0eiteration_base\x18\x04 \x01(\x03R\riterationBase\x12\x1d\n" +
 	"\n" +
-	"timeout_ms\x18\x05 \x01(\x03R\ttimeoutMs\"I\n" +
+	"timeout_ms\x18\x05 \x01(\x03R\ttimeoutMs\x12\x18\n" +
+	"\aprofile\x18\x06 \x01(\tR\aprofile\"I\n" +
 	"\vExplainStep\x12\x1c\n" +
 	"\tscenarios\x18\x01 \x03(\tR\tscenarios\x12\x1c\n" +
-	"\titeration\x18\x02 \x01(\x03R\titeration\"\xa1\x01\n" +
+	"\titeration\x18\x02 \x01(\x03R\titeration\"\xbb\x01\n" +
 	"\vContendStep\x12\x18\n" +
 	"\aclients\x18\x01 \x03(\x05R\aclients\x12\x1f\n" +
 	"\vhot_tickets\x18\x02 \x01(\x05R\n" +
@@ -1687,7 +1723,8 @@ const file_ticketbench_v1_runner_proto_rawDesc = "" +
 	"strategies\x18\x04 \x03(\tR\n" +
 	"strategies\x12\x1f\n" +
 	"\vtrace_ratio\x18\x05 \x01(\x01R\n" +
-	"traceRatio\"\v\n" +
+	"traceRatio\x12\x18\n" +
+	"\aprofile\x18\x06 \x01(\tR\aprofile\"\v\n" +
 	"\tStatsStep\"\xe8\x03\n" +
 	"\x04Step\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
@@ -1710,7 +1747,7 @@ const file_ticketbench_v1_runner_proto_rawDesc = "" +
 	"\tfail_fast\x18\x04 \x01(\bR\bfailFast\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9c\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb6\x02\n" +
 	"\n" +
 	"ResultMeta\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12\x17\n" +
@@ -1719,7 +1756,8 @@ const file_ticketbench_v1_runner_proto_rawDesc = "" +
 	"\atickets\x18\x04 \x01(\x03R\atickets\x12\x18\n" +
 	"\aindexes\x18\x05 \x01(\bR\aindexes\x12\x19\n" +
 	"\btrace_id\x18\x06 \x01(\tR\atraceId\x12>\n" +
-	"\x06labels\x18\a \x03(\v2&.ticketbench.v1.ResultMeta.LabelsEntryR\x06labels\x1a9\n" +
+	"\x06labels\x18\a \x03(\v2&.ticketbench.v1.ResultMeta.LabelsEntryR\x06labels\x12\x18\n" +
+	"\aprofile\x18\b \x01(\tR\aprofile\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x91\x01\n" +

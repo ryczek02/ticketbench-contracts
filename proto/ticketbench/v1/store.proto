@@ -39,6 +39,8 @@ message InfoResponse {
   string server_version = 2;
   string build_version = 3;
   repeated string strategies = 4;
+  // Connection profiles configured for this store besides the default.
+  repeated string profiles = 5;
 }
 
 message ResetRequest {}
@@ -72,6 +74,9 @@ message ExecuteRequest {
   int64 iteration = 2;
   DatasetSpec dataset = 3;
   int64 timeout_ms = 4;
+  // Connection profile of the store: "" (default, admin user, no TLS),
+  // "role" (least-privilege application user), "tls", "tls_role".
+  string profile = 5;
 }
 
 message ExecuteResponse {
@@ -102,6 +107,8 @@ message ContendRequest {
   string strategy = 5;
   // Fraction of booking attempts that get their own span (0..1).
   double trace_ratio = 6;
+  // Connection profile, see ExecuteRequest.profile.
+  string profile = 7;
 }
 
 message ContendRound {
